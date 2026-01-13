@@ -1,0 +1,31 @@
+# Export Slack Users
+
+This project retrieves Slack users from a workspace using the Slack API and
+ saves them in a JSON file. The project is stored in a Docker container and
+ uses environment variables for configuration.
+
+## Files
+
+### Source (/src)
+
+**main.py** : The main entry point. Connects to Slack using the token and API address
+from environment variables, retrieves users, and saves them in a JSON file.
+
+### Tests (/test)
+
+Unit tests are written using unittest with mocked Slack API calls to ensure reliable,
+ isolated testing of data processing and file persistence logic.
+
+## Usage
+
+1. Build the Docker image:
+
+```bash
+docker build -t slack-app .
+```
+
+2. Run the application:
+
+```bash
+docker run --rm --env-file .env slack-app
+```
