@@ -27,7 +27,7 @@ jobs:
 
       - name: Run linter (flake8)
         run: |
-          flake8 src tests
+          flake8 src test
 
       - name: Run tests
         env:
@@ -35,4 +35,4 @@ jobs:
           SLACK_TOKEN: "fake-token"
           SLACK_USERS_FILE: "users.json"
         run: |
-          python -m unittest discover -s tests
+          python -m unittest discover -s test
