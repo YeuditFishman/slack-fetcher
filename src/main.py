@@ -13,8 +13,8 @@ SLACK_API_URL = os.getenv("SLACK_API_URL")
 SLACK_USERS_FILE = os.getenv("SLACK_USERS_FILE")
 
 
-def get_slack_users():
-    headers = {"Authorization": f"Bearer {SLACK_TOKEN}"}
+def get_slack_users(token=None):
+    headers = {"Authorization": f"Bearer {token or SLACK_TOKEN}"}
     response = requests.get(SLACK_API_URL, headers=headers, verify=False)
     data = response.json()
     users_list = []
@@ -28,11 +28,12 @@ def get_slack_users():
     return users_list
 
 
-def save_users_to_json(users):
+def save_users_to_json(users, filename=None):
+    filename = filename or SLACK_USERS_FILE
     try:
-        with open(SLACK_USERS_FILE, "w", encoding="utf-8") as file:
+        with open(filename, "w", encoding="utf-8") as file:
             json.dump(users, file, ensure_ascii=False, indent=4)
-        logging.info(f"Saved {len(users)} users to {SLACK_USERS_FILE}")
+        logging.info(f"Saved {len(users)} users to {filename}")
     except Exception as error:
         logging.error(f"Failed to save users to JSON: {error}")
 
