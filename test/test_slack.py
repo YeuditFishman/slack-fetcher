@@ -1,13 +1,15 @@
 import json
 import os
-from src.slack import (
-    add_slack_user,
-    get_slack_users,
-    save_users_to_json,
+from src.slack import add_slack_user, get_slack_users
+
+from src.slack_api import (
     fetch_slack_users,
-    parse_slack_users,
+    send_slack_invite,
+)
+from src.slack_users import (
     build_slack_invite_payload,
-    send_slack_invite
+    parse_slack_users,
+    save_users_to_json
 )
 import unittest
 from unittest.mock import patch, MagicMock
@@ -15,7 +17,7 @@ from unittest.mock import patch, MagicMock
 
 class TestSlackUsers(unittest.TestCase):
 
-    @patch('src.slack.requests.get')
+    @patch('src.slack_api.requests.get')
     def test_get_slack_users(self, mock_get):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {
@@ -102,7 +104,7 @@ class TestAddSlackUser(unittest.TestCase):
         self.assertEqual(payload["real_name"], "New User")
         self.assertFalse(payload["resend"])
 
-    @patch('src.slack.requests.post')
+    @patch('src.slack_api.requests.post')
     def test_send_slack_invite_success(self, mock_post):
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -118,7 +120,7 @@ class TestAddSlackUser(unittest.TestCase):
         self.assertTrue(data["ok"])
         mock_post.assert_called_once()
 
-    @patch('src.slack.requests.post')
+    @patch('src.slack_api.requests.post')
     def test_add_slack_user_success(self, mock_post):
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -133,7 +135,7 @@ class TestAddSlackUser(unittest.TestCase):
 
         mock_post.assert_called_once()
 
-    @patch('src.slack.requests.post')
+    @patch('src.slack_api.requests.post')
     def test_add_slack_user_failure(self, mock_post):
         mock_response = MagicMock()
         mock_response.status_code = 200

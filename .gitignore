@@ -15,3 +15,5 @@ __pycache__/
 *.sublime-workspace
 
 .DS_Store
+
+*.ruff_cache/
