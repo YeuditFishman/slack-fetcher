@@ -1,6 +1,14 @@
 import json
 import os
-from src.slack import add_slack_user, get_slack_users, save_users_to_json
+from src.slack import (
+    add_slack_user,
+    get_slack_users,
+    save_users_to_json,
+    fetch_slack_users,
+    parse_slack_users,
+    build_slack_invite_payload,
+    send_slack_invite
+)
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -28,14 +36,29 @@ class TestSlackUsers(unittest.TestCase):
             ]
         }
 
-        users = get_slack_users("fake-token")
-        self.assertIsInstance(users, list)
-        self.assertGreater(len(users), 0)
-        user = users[0]
-        self.assertIn("id", user)
-        self.assertIn("username", user)
-        self.assertIn("full_name", user)
-        self.assertIn("is_bot", user)
+        data = fetch_slack_users("fake-token")
+        self.assertIn("members", data)
+
+    def test_parse_slack_users(self):
+        raw_data = {
+            "members": [
+                {
+                    "id": "U123",
+                    "name": "rikif",
+                    "real_name": "Riki F",
+                    "is_bot": False
+                },
+                {
+                    "id": "U124",
+                    "name": "botuser",
+                    "real_name": "Bot",
+                    "is_bot": True
+                }
+            ]
+        }
+        users = parse_slack_users(raw_data)
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0]["username"], "rikif")
 
     def test_save_users_to_json(self):
         users = [
@@ -54,8 +77,46 @@ class TestSlackUsers(unittest.TestCase):
             self.assertEqual(data, users)
         os.remove(filename)
 
+    def test_get_slack_users_combined(self):
+        with patch('src.slack.fetch_slack_users') as mock_fetch:
+            mock_fetch.return_value = {
+                "members": [
+                    {
+                        "id": "U123",
+                        "name": "rikif",
+                        "real_name": "Riki F",
+                        "is_bot": False
+                    }
+                ]
+            }
+            users = get_slack_users("fake-token")
+            self.assertEqual(len(users), 1)
+            self.assertEqual(users[0]["username"], "rikif")
+
 
 class TestAddSlackUser(unittest.TestCase):
+
+    def test_build_slack_invite_payload(self):
+        payload = build_slack_invite_payload("user@example.com", "New User")
+        self.assertEqual(payload["email"], "user@example.com")
+        self.assertEqual(payload["real_name"], "New User")
+        self.assertFalse(payload["resend"])
+
+    @patch('src.slack.requests.post')
+    def test_send_slack_invite_success(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"ok": True}
+        mock_post.return_value = mock_response
+
+        payload = {
+            "email": "user@example.com",
+            "real_name": "New User",
+            "resend": False
+            }
+        data = send_slack_invite(payload, "fake-token")
+        self.assertTrue(data["ok"])
+        mock_post.assert_called_once()
 
     @patch('src.slack.requests.post')
     def test_add_slack_user_success(self, mock_post):
@@ -71,28 +132,19 @@ class TestAddSlackUser(unittest.TestCase):
         )
 
         mock_post.assert_called_once()
-        args, kwargs = mock_post.call_args
-        self.assertIn("json", kwargs)
-        self.assertEqual(kwargs["json"]["email"], "user@example.com")
-        self.assertEqual(kwargs["json"]["real_name"], "New User")
 
-        @patch('src.slack.requests.post')
-        def test_add_slack_user_failure(self, mock_post):
-            mock_response = MagicMock()
-            mock_response.status_code = 200
-            mock_response.json.return_value = {
-                "ok": False,
-                "error": "not_allowed"
-                }
-            mock_post.return_value = mock_response
+    @patch('src.slack.requests.post')
+    def test_add_slack_user_failure(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "ok": False,
+            "error": "not_allowed"
+            }
+        mock_post.return_value = mock_response
 
-            add_slack_user(
-                email="user@example.com",
-                full_name="New User",
-                user_token="fake-token"
-            )
-
-            mock_post.assert_called_once()
+        add_slack_user("user@example.com", "New User", "fake-token")
+        mock_post.assert_called_once()
 
 
 if __name__ == "__main__":
