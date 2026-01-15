@@ -1,13 +1,13 @@
 import json
 import os
-from src.main import get_slack_users, save_users_to_json
+from src.slack import get_slack_users, save_users_to_json
 import unittest
 from unittest.mock import patch
 
 
 class TestSlackUsers(unittest.TestCase):
 
-    @patch('src.main.requests.get')
+    @patch('src.slack.requests.get')
     def test_get_slack_users(self, mock_get):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = {

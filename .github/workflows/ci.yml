@@ -2,9 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: 
+      - "main"
+      - "feature/slack"
   pull_request:
-    branches: [ "main" ]
+    branches: 
+      - "main"
+      - "feature/slack"
 
 jobs:
   build:

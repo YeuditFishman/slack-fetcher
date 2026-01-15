@@ -19,12 +19,13 @@ def get_slack_users(token=None):
     data = response.json()
     users_list = []
     for user in data.get("members", []):
-        users_list.append({
-            "id": user["id"],
-            "username": user["name"],
-            "full_name": user.get("real_name", ""),
-            "is_bot": user.get("is_bot", False)
-        })
+        if not user.get("is_bot", False):
+            users_list.append({
+                "id": user["id"],
+                "username": user["name"],
+                "full_name": user.get("real_name", ""),
+                "is_bot": user.get("is_bot", False)
+            })
     return users_list
 
 
