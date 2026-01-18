@@ -20,9 +20,13 @@ def parse_slack_users(data):
 
 def save_users_to_json(users, filename=None):
     filename = filename or SLACK_USERS_FILE
-    with open(filename, "w", encoding="utf-8") as file:
-        json.dump(users, file, ensure_ascii=False, indent=4)
-    logging.info("Saved %s users to %s", len(users), filename)
+    try:
+        with open(filename, "w", encoding="utf-8") as file:
+            json.dump(users, file, ensure_ascii=False, indent=4)
+        logging.info("Saved %s users to %s", len(users), filename)
+    except OSError as error:
+        logging.error("Failed to save users to %s: %s", filename, error)
+        raise
 
 
 def build_slack_invite_payload(email, full_name):
